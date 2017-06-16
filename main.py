@@ -15,6 +15,8 @@
 # 3. Navigate the browser to the local webpage.
 from flask import Flask, render_template, Response
 from camera import VideoCamera
+import argparse
+import sys
 
 app = Flask(__name__)
 
@@ -33,5 +35,23 @@ def video_feed():
     return Response(gen(VideoCamera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+def parse_arguments(argv):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--card', type=str, 
+        help='Network Card', default='eth0')
+    parser.add_argument('--debug', 
+        help='Debug', action='store_true')
+    return parser.parse_args(argv)
+
+def get_ip(net_card):
+    import netifaces as ni
+    ni.ifaddresses(net_card)
+    ip = ni.ifaddresses(net_card)[2][0]['addr']
+    print ip  # should print "192.168.0.18" 
+    return ip 
+
 if __name__ == '__main__':
-    app.run(host='192.168.0.17', debug=True)
+    args = parse_arguments(sys.argv[1:])
+    host = get_ip(args.card)
+
+    app.run(host=host, debug=args.debug)
